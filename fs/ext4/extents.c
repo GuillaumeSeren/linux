@@ -4731,6 +4731,7 @@ static long ext4_zero_range(struct file *file, loff_t offset,
 	loff_t new_size = 0;
 	int ret = 0;
 	int flags;
+	int credits;
 	int partial;
 	loff_t start, end;
 	ext4_lblk_t lblk;
@@ -4830,8 +4831,9 @@ static long ext4_zero_range(struct file *file, loff_t offset,
 		if (ret)
 			goto out_dio;
 	}
-
-	handle = ext4_journal_start(inode, EXT4_HT_MISC, 4);
+	/* In worst case we have to writeout two nonadjacent unwritten blocks */
+	credits = ext4_ext_index_trans_blocks(inode, 2) + 2;
+	handle = ext4_journal_start(inode, EXT4_HT_MISC, credits);
 	if (IS_ERR(handle)) {
 		ret = PTR_ERR(handle);
 		ext4_std_error(inode->i_sb, ret);
